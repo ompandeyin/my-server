@@ -1,60 +1,42 @@
 const express = require("express");
-const session = require("express-session");
 const path = require("path");
 
 const app = express();
 const PORT = 3000;
 
-// Middleware to read form data
+// Middleware
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
-
-// Session setup
-app.use(
-  session({
-    secret: "secret-key",
-    resave: false,
-    saveUninitialized: true,
-  })
-);
-
-// Serve static files (public folder)
 app.use(express.static("public"));
 
-// 🔐 Admin Login Page
-app.get("/admin", (req, res) => {
+// Dummy user (for testing)
+const USER = {
+  username: "admin",
+  password: "1234"
+};
+
+// 👉 Default route (IMPORTANT - fixes "Cannot GET /")
+app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "login.html"));
 });
 
-// 🔑 Handle Login
+// 👉 Login route
 app.post("/login", (req, res) => {
-  const { password } = req.body;
+  const { username, password } = req.body;
 
-  if (password === "1234") {
-    req.session.isAuth = true;
-    res.redirect("/dashboard");
+  if (username === USER.username && password === USER.password) {
+    res.redirect("/dashboard.html");
   } else {
-    res.send("Wrong Password ❌");
+    res.send("Invalid credentials ❌");
   }
 });
 
-// 📊 Protected Dashboard
-app.get("/dashboard", (req, res) => {
-  if (req.session.isAuth) {
-    res.sendFile(path.join(__dirname, "public", "dashboard.html"));
-  } else {
-    res.redirect("/admin");
-  }
-});
-
-// 🚪 Logout
+// 👉 Logout route
 app.get("/logout", (req, res) => {
-  req.session.destroy(() => {
-    res.redirect("/admin");
-  });
+  res.redirect("/");
 });
 
-// 🚀 Start Server
-app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
+// 👉 Start server (IMPORTANT for EC2)
+app.listen(PORT, "0.0.0.0", () => {
+  console.log(`Server running on http://0.0.0.0:${PORT}`);
 });
